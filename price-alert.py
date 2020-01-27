@@ -8,13 +8,18 @@ import requests
 import smtplib
 import argparse
 import logging
+import os
 from copy import copy
 from lxml import html
 from urllib.parse import urljoin
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-
+from urllib.error import HTTPError
+my_proxies = {
+          'http':  'socks5://127.0.0.1:9050',
+          'https': 'socks5://127.0.0.1:9050',
+        }
+# my_proxies = {}
 def send_email(price, url, email_info):
     try:
         s = smtplib.SMTP(email_info['smtp_url'])
@@ -37,12 +42,19 @@ def send_email(price, url, email_info):
 
 
 def get_price(url, selector):
-    r = requests.Session().get(url, headers={
-        'User-Agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
-            '(KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
-    })
-    r.raise_for_status()
+    try:
+        r = requests.Session().get(url, headers={
+            'User-Agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+        },proxies=my_proxies)
+        r.raise_for_status()
+    except requests.exceptions.HTTPError:
+        logger.info('fail to request, changing ip')
+        os.system("killall -HUP tor")
+        time.sleep(1)
+        return
+    
     tree = html.fromstring(r.text)
     try:
         # extract the price from the string
