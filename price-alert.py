@@ -43,6 +43,7 @@ def send_email(price, url, email_info):
 
 def get_price(url, selector):
     try:
+        print(url)
         r = requests.Session().get(url, headers={
             'User-Agent':
                 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
@@ -54,8 +55,15 @@ def get_price(url, selector):
         os.system("killall -HUP tor")
         time.sleep(1)
         return
-    
+    if "automated access" in r.text:
+        print("banned")
+        logger.info('fail to request, changing ip')
+        os.system("killall -HUP tor")
+        time.sleep(1)
+        return
     tree = html.fromstring(r.text)
+    print(tree.findtext('.//title'))
+    
     try:
         # extract the price from the string
         price_string = re.findall('\d+.\d+', tree.xpath(selector)[0].text)[0]
@@ -85,7 +93,7 @@ def parse_args():
                         default='%s/config.json' % os.path.dirname(
                             os.path.realpath(__file__)),
                         help='Configuration file path')
-    parser.add_argument('-t', '--poll-interval', type=int, default=30,
+    parser.add_argument('-t', '--poll-interval', type=int, default=10,
                         help='Time in seconds between checks')
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Enable debug level logging')
