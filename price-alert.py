@@ -15,11 +15,18 @@ from urllib.parse import urljoin
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.error import HTTPError
+from stem import Signal
+from stem.control import Controller
+
 my_proxies = {
           'http':  'socks5://127.0.0.1:9050',
           'https': 'socks5://127.0.0.1:9050',
         }
-# my_proxies = {}
+def renew_tor_ip():
+    with Controller.from_port(port = 9051) as controller:
+        controller.authenticate(password="atmppasswd")
+        controller.signal(Signal.NEWNYM)
+
 def send_email(price, url, email_info):
     try:
         s = smtplib.SMTP(email_info['smtp_url'])
@@ -40,10 +47,22 @@ def send_email(price, url, email_info):
         s.sendmail(email_info['user'], email_info['user'], msg.as_string())
         logger.info('Message has been sent.')
 
+def get_current_ip():
+    try:
+         r = requests.Session().get("http://httpbin.org/ip", headers={
+            'User-Agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+        },proxies=my_proxies)
+    except Exception as e:
+        print(str(e))
+    else:
+        return r.text
 
 def get_price(url, selector):
     try:
         print(url)
+        print(get_current_ip())
         r = requests.Session().get(url, headers={
             'User-Agent':
                 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
@@ -52,21 +71,19 @@ def get_price(url, selector):
         r.raise_for_status()
     except requests.exceptions.HTTPError:
         logger.info('fail to request, changing ip')
-        os.system("killall -HUP tor")
-        time.sleep(1)
+        renew_tor_ip()
         return
     if "automated access" in r.text:
         print("banned")
         logger.info('fail to request, changing ip')
-        os.system("killall -HUP tor")
-        time.sleep(1)
+        renew_tor_ip()
         return
     tree = html.fromstring(r.text)
     print(tree.findtext('.//title'))
     
     try:
         # extract the price from the string
-        price_string = re.findall('\d+.\d+', tree.xpath(selector)[0].text)[0]
+        price_string = re.findall(r'\d+.\d+', tree.xpath(selector)[0].text)[0]
         logger.info(price_string)
         return float(price_string.replace(',', '.'))
     except (IndexError, TypeError) as e:
