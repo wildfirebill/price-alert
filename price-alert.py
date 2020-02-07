@@ -28,6 +28,7 @@ def renew_tor_ip():
         controller.signal(Signal.NEWNYM)
 
 def send_email(price, url, email_info):
+    price = str(price).replace('.', '')
     try:
         s = smtplib.SMTP(email_info['smtp_url'])
         s.starttls()
@@ -39,12 +40,12 @@ def send_email(price, url, email_info):
         msg = MIMEMultipart('alternative')
         msg['Subject'] = 'Price Alert - %s' % price
         msg['From'] = email_info['user']
-        msg['To'] = email_info['user']
+        msg['To'] = email_info['recipients']
         text = 'The price is currently %s !! URL to salepage: %s' % (
             price, url)
         part = MIMEText(text, 'plain')
         msg.attach(part)
-        s.sendmail(email_info['user'], email_info['user'], msg.as_string())
+        s.sendmail(email_info['user'], email_info['recipients'].split(","), msg.as_string())
         logger.info('Message has been sent.')
 
 def get_current_ip():
@@ -72,6 +73,9 @@ def get_price(url, selector):
     except requests.exceptions.HTTPError:
         logger.info('fail to request, changing ip')
         renew_tor_ip()
+        return
+    except Exception as e:
+        print(e)
         return
     if "automated access" in r.text:
         print("banned")
