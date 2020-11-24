@@ -1,7 +1,7 @@
-Amazon price alert
+CDkeys.com price alert
 ==================
 
-Poll an Amazon sale page (or multiple pages) for a maximum price and send yourself an email if the price check passes.
+Poll an cdkeys sale page (or multiple pages) for a maximum price and send yourself an email if the price check passes.
 
 ## Installation
 Clone the repository. This code was written for python 3 (3.6.3), you should also have [pip](https://pip.pypa.io/en/stable/) installed.
@@ -23,9 +23,9 @@ Configuration is held in json format, `config.json` is used by default and has s
     - `password` - the password to be used for authentication
         (if you have 2FA set up on your account, take a look at [app passwords](https://security.google.com/settings/security/apppasswords))
 
-- `base_url` (string) - the base amazon url of the sales page, differs among the different variants of amazon.
+- `base_url` (string) - the base cdkeys url of the sales page, differs among the different variants of cdkeys.
 
-- `xpath_selector` (string) - the xpath selector of the element holding the price in the sale page, the default is true for all amazon variants that have been tested so far (default: `//*[@id='priceblock_ourprice']`)
+- `xpath_selector` (string) - the xpath selector of the element holding the price in the sale page, the default is true for all cdkeys variants that have been tested so far (default: `//*[@id='priceblock_ourprice']`)
 
 - `items` (array) - an array of items, each item should be an array as follows:
 
@@ -50,7 +50,7 @@ optional arguments:
 when running without any arguments, the script will use `config.json` for configuration and the default polling interval of 30 seconds.
 
 ### Other sale pages/email client
-The script was tested on Amazon, so if you try running it on a different site make sure that `xpath_selector` is set correctly in the configuration json and that the price check itself is correct.
+The script was tested on cdkeys, so if you try running it on a different site make sure that `xpath_selector` is set correctly in the configuration json and that the price check itself is correct.
 The smtp client is configured for Gmail, so be sure to change it if you're using a different one.
 
 
